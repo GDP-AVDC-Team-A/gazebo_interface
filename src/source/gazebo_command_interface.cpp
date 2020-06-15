@@ -43,8 +43,7 @@ GazeboCommandInterface::~GazeboCommandInterface()
 void GazeboCommandInterface::ownSetUp()
 {
     ros::param::get("~drone_id", drone_id);
-    ros::param::get("~mav_name", mav_name);
-    ros::param::get("~frecuency", frecuency);                      
+    ros::param::get("~mav_name", mav_name);                  
 }
 
 void GazeboCommandInterface::ownStart()
@@ -54,7 +53,7 @@ void GazeboCommandInterface::ownStart()
     motor_speed_pub = n.advertise<mav_msgs::Actuators>("/"+mav_name+std::to_string(drone_id)+"/command/motor_speed", 1, true);
 
     //Subscribers
-    motor_speed_sub = n.subscribe("actuator_command/motor_speed", 1, &GazeboCommandInterface::MotorSpeedCallback, this);
+    motor_speed_sub = n.subscribe("actuator_command/motor_speed", 1, &GazeboCommandInterface::MotorSpeedCallback, this, ros::TransportHints().tcpNoDelay());
 }
 
 //Reset
@@ -98,15 +97,14 @@ int main(int argc,char **argv)
     GazeboCommandInterface gazebo_command_interface;
     gazebo_command_interface.setUp();
     gazebo_command_interface.start();
-
-    ros::Rate loop_rate(gazebo_command_interface.getRate());
  
     try
     {    
         while(ros::ok())
         {  
-             ros::spinOnce();
-             loop_rate.sleep();
+            ros::spin();
+             //ros::spinOnce();
+             //loop_rate.sleep();
         }
     }
     catch (std::exception &ex)
