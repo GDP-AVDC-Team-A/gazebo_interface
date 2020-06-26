@@ -50,5 +50,12 @@
 			<param name="mav_name" value="$(arg mav_name)" type="string"/>
 		</node>
 
+    	<!-- gazebo_flightstate_interface -->
+		<node name="gazebo_flightstate_interface" pkg="gazebo_interface" type="gazebo_flightstate_interface" output="screen">
+			<param name="drone_id" value="$(arg drone_id)" type="int"/>
+			<param name="frecuency" value="$(arg frecuency)" type="int"/>
+			<param name="mav_name" value="$(arg mav_name)" type="string"/>
+		</node>
+
 	</group>
 </launch>

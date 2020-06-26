@@ -35,13 +35,13 @@ set(GAZEBO_INTERFACE_HEADER_FILES
   )
 
 find_package(catkin REQUIRED
-                COMPONENTS roscpp std_msgs geometry_msgs sensor_msgs gazebo_msgs mavros robot_process droneMsgsROS lib_cvgutils tf_conversions)
+                COMPONENTS roscpp std_msgs geometry_msgs sensor_msgs gazebo_msgs mavros robot_process aerostack_msgs lib_cvgutils tf_conversions)
 
 
 
 catkin_package(
 #       INCLUDE_DIRS ${OKTODRIVER_INCLUDE_DIR}
-        CATKIN_DEPENDS roscpp std_msgs geometry_msgs sensor_msgs gazebo_msgs mavros robot_process droneMsgsROS lib_cvgutils tf_conversions
+        CATKIN_DEPENDS roscpp std_msgs geometry_msgs sensor_msgs gazebo_msgs mavros robot_process aerostack_msgs lib_cvgutils tf_conversions
   )
 
 
@@ -83,3 +83,8 @@ add_executable(gazebo_speed_interface  src/source/gazebo_speed_interface.cpp)
 add_dependencies(gazebo_speed_interface ${catkin_EXPORTED_TARGETS})
 target_link_libraries(gazebo_speed_interface gazebo_interface)
 target_link_libraries(gazebo_speed_interface ${catkin_LIBRARIES})
+
+add_executable(gazebo_flightstate_interface  src/source/gazebo_flightstate_interface.cpp)
+add_dependencies(gazebo_flightstate_interface ${catkin_EXPORTED_TARGETS})
+target_link_libraries(gazebo_flightstate_interface gazebo_interface)
+target_link_libraries(gazebo_flightstate_interface ${catkin_LIBRARIES})
