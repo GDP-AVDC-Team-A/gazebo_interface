@@ -63,6 +63,11 @@ add_dependencies(gazebo_imu_interface ${catkin_EXPORTED_TARGETS})
 target_link_libraries(gazebo_imu_interface gazebo_interface)
 target_link_libraries(gazebo_imu_interface ${catkin_LIBRARIES})
 
+add_executable(gazebo_camera_interface  src/source/gazebo_camera_interface.cpp)
+add_dependencies(gazebo_camera_interface ${catkin_EXPORTED_TARGETS})
+target_link_libraries(gazebo_camera_interface gazebo_interface)
+target_link_libraries(gazebo_camera_interface ${catkin_LIBRARIES})
+
 add_executable(gazebo_ground_truth_interface  src/source/gazebo_ground_truth_interface.cpp)
 add_dependencies(gazebo_ground_truth_interface ${catkin_EXPORTED_TARGETS})
 target_link_libraries(gazebo_ground_truth_interface gazebo_interface)

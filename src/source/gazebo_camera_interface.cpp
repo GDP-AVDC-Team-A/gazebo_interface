@@ -1,5 +1,5 @@
 /*!*******************************************************************************
- *  \brief      This is the altitude interface package for Gazebo.
+ *  \brief      This is the camera interface package for Gazebo.
  *  \authors    Alberto Rodelgo
  *  \copyright  Copyright (c) 2020 Universidad Politecnica de Madrid
  *
@@ -28,94 +28,73 @@
  * EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *******************************************************************************/
 
-#include "gazebo_altitude_interface.h"
+#include "gazebo_camera_interface.h"
 using namespace std;
 
-AltitudeInterface::AltitudeInterface()
+CameraInterface::CameraInterface()
 {
 }
 
-AltitudeInterface::~AltitudeInterface()
+CameraInterface::~CameraInterface()
 {
 }
 
-void AltitudeInterface::ownSetUp()
-{
+void CameraInterface::ownSetUp() {
     ros::param::get("~drone_id", drone_id);
-    ros::param::get("~mav_name", mav_name);
-    ros::param::get("~frecuency", frecuency);
+    ros::param::get("~mav_name", mav_name);   
+    ros::param::get("~frecuency", frecuency);       
 }
 
-int AltitudeInterface::getRate(){
+void CameraInterface::ownStart()
+{
+    ros::NodeHandle n;
+    //Publisher
+    camera_pub = n.advertise<sensor_msgs::Image>("sensor_measurement/camera", 1, true);
+
+    //Subscriber
+    camera_sub = n.subscribe("/"+mav_name+cvg_int_to_string(drone_id)+"/camera_front/image_raw", 1, &CameraInterface::cameraCallback, this);
+}
+
+int CameraInterface::getRate(){
     return frecuency;
 }
 
-void AltitudeInterface::ownStart()
-{
-    ros::NodeHandle n;
-    //Publishers
-    altitude_pub  = n.advertise<geometry_msgs::PointStamped>("sensor_measurement/altitude", 1, true);
-    //Subscribers
-    odometry_sub   = n.subscribe("/"+mav_name+cvg_int_to_string(drone_id)+"/ground_truth/odometry", 1, &AltitudeInterface::odometryCallback, this);
-}
-
 //Reset
-bool AltitudeInterface::resetValues()
+bool CameraInterface::resetValues()
 {
     return true;
 }
 
-//Stop
-void AltitudeInterface::ownStop()
-{
-  altitude_pub.shutdown();
-  odometry_sub.shutdown();
-}
-
 //Run
-void AltitudeInterface::ownRun()
+void CameraInterface::ownRun()
 {
+
 }
 
-void AltitudeInterface::odometryCallback(const nav_msgs::Odometry &msg)
+//Stop
+void CameraInterface::ownStop()
 {
-    ros::Time current_timestamp = ros::Time::now();
+    camera_pub.shutdown();
+    camera_sub.shutdown();
+}
 
-    // double zraw_t = (-1.0) * msg.pose.pose.position.z;
-
-    // time_t tv_sec; suseconds_t tv_usec;
-    // {
-    // tv_sec  = current_timestamp.sec;
-    // tv_usec = current_timestamp.nsec / 1000.0;
-    // filtered_derivative_wcb.setInput( zraw_t, tv_sec, tv_usec);
-    // }
-
-    // double z_t, dz_t;
-    // filtered_derivative_wcb.getOutput(z_t, dz_t);
-
-
-    //Read Altitude from Pose
-    altitude_msg.header = msg.header;
-    altitude_msg.header.stamp  = current_timestamp;
-    altitude_msg.point.z = (-1.0) * msg.pose.pose.position.z;
-    altitude_msg.point.x = 0;
-    altitude_msg.point.y = 0;
-    altitude_pub.publish(altitude_msg);
+void CameraInterface::cameraCallback(const sensor_msgs::Image &msg)
+{
+    camera_pub.publish(msg);
 }
 
 int main(int argc,char **argv)
 {
     //Ros Init
-    ros::init(argc, argv, "AltitudeInterface");
+    ros::init(argc, argv, "CameraInterface");
 
-    cout<<"[ROSNODE] Starting AltitudeInterface"<<endl;
+    cout<<"[ROSNODE] Starting CameraInterface"<<endl;
 
     //Vars
-    AltitudeInterface pose_interface;
-    pose_interface.setUp();
-    pose_interface.start();
-
-    ros::Rate loop_rate(pose_interface.getRate());
+    CameraInterface camera_interface;
+    camera_interface.setUp();
+    camera_interface.start();
+    ros::Rate loop_rate(camera_interface.getRate());
  
     try
     {    
