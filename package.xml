@@ -15,7 +15,6 @@
 	<build_depend>geometry_msgs</build_depend>
 	<build_depend>gazebo_msgs</build_depend>
 	<build_depend>sensor_msgs</build_depend>
-  	<build_depend>mavros</build_depend> 
 	<build_depend>aerostack_msgs</build_depend>
 	<build_depend>lib_cvgutils</build_depend>
     <build_depend>tf_conversions</build_depend>
@@ -27,7 +26,6 @@
 	<run_depend>geometry_msgs</run_depend>
 	<run_depend>gazebo_msgs</run_depend>
 	<run_depend>sensor_msgs</run_depend>
-  	<run_depend>mavros</run_depend> 
 	<run_depend>aerostack_msgs</run_depend>
 	<run_depend>lib_cvgutils</run_depend>
     <run_depend>tf_conversions</run_depend>

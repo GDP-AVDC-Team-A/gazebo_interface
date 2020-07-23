@@ -108,7 +108,7 @@ void GazeboFlightStateInterface::ownRun()
                 }
             }else{
                 if (flight_state_msg.state == aerostack_msgs::FlightState::LANDING){
-                    if (odom_msg.pose.pose.position.z < 0.1 && std::abs(odom_msg.twist.twist.linear.z < 0.05)){
+                    if (std::abs(odom_msg.pose.pose.position.z) < 0.1 && std::abs(odom_msg.twist.twist.linear.z < 0.05)){
                         flight_state_msg.state = aerostack_msgs::FlightState::LANDED;
                     }
                 }
@@ -117,11 +117,11 @@ void GazeboFlightStateInterface::ownRun()
         break;
         case aerostack_msgs::FlightActionCommand::MOVE:
         {
-            if(odom_msg.pose.pose.position.z > 0.1 && (std::abs(odom_msg.twist.twist.linear.x) > 0.05 || std::abs(odom_msg.twist.twist.linear.y) > 0.05 || std::abs(odom_msg.twist.twist.linear.z) > 0.05 ||
+            if(std::abs(odom_msg.pose.pose.position.z) > 0.1 && (std::abs(odom_msg.twist.twist.linear.x) > 0.05 || std::abs(odom_msg.twist.twist.linear.y) > 0.05 || std::abs(odom_msg.twist.twist.linear.z) > 0.05 ||
             std::abs(odom_msg.twist.twist.angular.x) > 0.05 || std::abs(odom_msg.twist.twist.angular.y) > 0.05 || std::abs(odom_msg.twist.twist.angular.z) > 0.05)){
                 flight_state_msg.state = aerostack_msgs::FlightState::FLYING;
             }
-            if(odom_msg.pose.pose.position.z > 0.1 && std::abs(odom_msg.twist.twist.linear.x) < 0.05 && std::abs(odom_msg.twist.twist.linear.y) < 0.05 && std::abs(odom_msg.twist.twist.linear.z) < 0.05 &&
+            if(std::abs(odom_msg.pose.pose.position.z) > 0.1 && std::abs(odom_msg.twist.twist.linear.x) < 0.05 && std::abs(odom_msg.twist.twist.linear.y) < 0.05 && std::abs(odom_msg.twist.twist.linear.z) < 0.05 &&
             std::abs(odom_msg.twist.twist.angular.x) < 0.05 && std::abs(odom_msg.twist.twist.angular.y) < 0.05 && std::abs(odom_msg.twist.twist.angular.z) < 0.05){
                 flight_state_msg.state = aerostack_msgs::FlightState::HOVERING;
             }
