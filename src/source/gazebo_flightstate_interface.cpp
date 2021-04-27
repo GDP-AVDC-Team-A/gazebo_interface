@@ -43,19 +43,20 @@ GazeboFlightStateInterface::~GazeboFlightStateInterface()
 void GazeboFlightStateInterface::ownSetUp()
 {
     ros::param::get("~drone_id", drone_id);
-    ros::param::get("~mav_name", mav_name);        
-    ros::param::get("~frecuency", frecuency);          
+    ros::param::get("~mav_name", mav_name);
+    ros::param::get("~frecuency", frecuency);
 }
 
 void GazeboFlightStateInterface::ownStart()
 {
-    ros::NodeHandle n;    
+    ros::NodeHandle n;
     //Publishers
     flightstate_pub = n.advertise<aerostack_msgs::FlightState>("self_localization/flight_state", 1, true);
 
     //Subscribers
     odometry_sub = n.subscribe("/"+mav_name+cvg_int_to_string(drone_id)+"/ground_truth/odometry",1, &GazeboFlightStateInterface::odometryCallback, this);
     flightaction_sub = n.subscribe("actuator_command/flight_action",1, &GazeboFlightStateInterface::flightActionCallback, this);
+    flightstate_sub = n.subscribe("self_localization/flight_state", 1, &GazeboFlightStateInterface::statusCallBack, this);
 
     flight_action_msg.action = aerostack_msgs::FlightActionCommand::UNKNOWN;
     flight_state_msg.state = aerostack_msgs::FlightState::UNKNOWN;
@@ -70,7 +71,7 @@ bool GazeboFlightStateInterface::resetValues()
 //Stop
 void GazeboFlightStateInterface::ownStop()
 {
-    flightstate_pub.shutdown();   
+    flightstate_pub.shutdown();
     odometry_sub.shutdown();
     flightaction_sub.shutdown();
 }
@@ -81,42 +82,41 @@ void GazeboFlightStateInterface::ownRun()
     switch(flight_action_msg.action){
         case aerostack_msgs::FlightActionCommand::TAKE_OFF:
             if (flight_state_msg.state == aerostack_msgs::FlightState::LANDED || flight_state_msg.state == aerostack_msgs::FlightState::UNKNOWN){
-                if (odom_msg.twist.twist.linear.z > 0){
-                    flight_state_msg.state = aerostack_msgs::FlightState::TAKING_OFF;
-                }
-            }else{
+                flight_state_msg.state = aerostack_msgs::FlightState::TAKING_OFF;
+            }
+            else{
                 if (flight_state_msg.state == aerostack_msgs::FlightState::TAKING_OFF){
-                    if (std::abs(odom_msg.twist.twist.linear.z) < 0.05 && odom_msg.pose.pose.position.z > 0.1){
+                    if (odom_msg.pose.pose.position.z > 0.1){
                         flight_state_msg.state = aerostack_msgs::FlightState::FLYING;
                     }
-                }            
+                }
             }
         break;
-        case aerostack_msgs::FlightActionCommand::HOVER:
-        {
+        case aerostack_msgs::FlightActionCommand::HOVER:{
             if(odom_msg.pose.pose.position.z > 0.1 && std::abs(odom_msg.twist.twist.linear.x) < 0.05 && std::abs(odom_msg.twist.twist.linear.y) < 0.05 && std::abs(odom_msg.twist.twist.linear.z) < 0.05 &&
             std::abs(odom_msg.twist.twist.angular.x) < 0.05 && std::abs(odom_msg.twist.twist.angular.y) < 0.05 && std::abs(odom_msg.twist.twist.angular.z) < 0.05){
                 flight_state_msg.state = aerostack_msgs::FlightState::HOVERING;
             }
         }
         break;
-        case aerostack_msgs::FlightActionCommand::LAND:
-        {
-            if (flight_state_msg.state == aerostack_msgs::FlightState::HOVERING || flight_state_msg.state == aerostack_msgs::FlightState::FLYING){
-                if (odom_msg.twist.twist.linear.z < 0){
-                    flight_state_msg.state = aerostack_msgs::FlightState::LANDING;
-                }
-            }else{
+        case aerostack_msgs::FlightActionCommand::LAND:{
+            if (flight_state_msg.state != aerostack_msgs::FlightState::LANDED && flight_state_msg.state != aerostack_msgs::FlightState::LANDING){
+                flight_state_msg.state = aerostack_msgs::FlightState::LANDING;
+                landing_command_time_ = ros::Time::now();
+            }
+            else{
                 if (flight_state_msg.state == aerostack_msgs::FlightState::LANDING){
-                    if (std::abs(odom_msg.pose.pose.position.z) < 0.1 && std::abs(odom_msg.twist.twist.linear.z < 0.05)){
+                    if (fabs(odom_msg.twist.twist.linear.z) > 0.05){
+                        landing_command_time_ = ros::Time::now();
+                    }
+                    else if (((ros::Time::now()-landing_command_time_).toSec() > LANDING_CHECK_DELAY)){
                         flight_state_msg.state = aerostack_msgs::FlightState::LANDED;
                     }
                 }
             }
         }
         break;
-        case aerostack_msgs::FlightActionCommand::MOVE:
-        {
+        case aerostack_msgs::FlightActionCommand::MOVE:{
             if(std::abs(odom_msg.pose.pose.position.z) > 0.1 && (std::abs(odom_msg.twist.twist.linear.x) > 0.05 || std::abs(odom_msg.twist.twist.linear.y) > 0.05 || std::abs(odom_msg.twist.twist.linear.z) > 0.05 ||
             std::abs(odom_msg.twist.twist.angular.x) > 0.05 || std::abs(odom_msg.twist.twist.angular.y) > 0.05 || std::abs(odom_msg.twist.twist.angular.z) > 0.05)){
                 flight_state_msg.state = aerostack_msgs::FlightState::FLYING;
@@ -148,8 +148,7 @@ void GazeboFlightStateInterface::ownRun()
     flightstate_pub.publish(flight_state_msg);
 }
 
-void GazeboFlightStateInterface::odometryCallback(const nav_msgs::Odometry::ConstPtr &msg)
-{
+void GazeboFlightStateInterface::odometryCallback(const nav_msgs::Odometry::ConstPtr &msg){
     odom_msg = *msg;
 }
 
@@ -157,13 +156,15 @@ int GazeboFlightStateInterface::getRate(){
     return frecuency;
 }
 
-void GazeboFlightStateInterface::flightActionCallback(const aerostack_msgs::FlightActionCommand &msg)
-{
+void GazeboFlightStateInterface::flightActionCallback(const aerostack_msgs::FlightActionCommand &msg){
     flight_action_msg = msg;
 }
 
-int main(int argc,char **argv)
-{
+void GazeboFlightStateInterface::statusCallBack(const aerostack_msgs::FlightState &msg){
+  flight_state_msg.state = msg.state;
+}
+
+int main(int argc,char **argv){
     //Ros Init
     ros::init(argc, argv, "GazeboFlightStateInterface");
 

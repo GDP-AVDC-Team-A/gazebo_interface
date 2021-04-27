@@ -44,6 +44,8 @@
 #include "cvg_string_conversions.h"
 #include "aerostack_msgs/FlightState.h"
 #include "aerostack_msgs/FlightActionCommand.h"
+#define LANDING_TIMEOUT 60
+#define LANDING_CHECK_DELAY 1
 
 class GazeboFlightStateInterface : public RobotProcess
 {
@@ -67,12 +69,15 @@ private: /*RobotProcess*/
 
     // Publishers
     ros::Publisher flightstate_pub;
+    ros::Subscriber flightstate_sub;
 
     aerostack_msgs::FlightState flight_state_msg;
     aerostack_msgs::FlightActionCommand flight_action_msg;
     nav_msgs::Odometry odom_msg;
+    ros::Time landing_command_time_;
 
 public:
+    void statusCallBack(const aerostack_msgs::FlightState &msg);
     std::string mav_name;
     int drone_id;
     int frecuency;
